@@ -19,6 +19,7 @@ pub fn maybe_initialize_logger_and_return_cli_args(cli_args: CliArgs) -> Result<
             }?,
             Config::default(),
             TerminalMode::Mixed,
+            ColorChoice::Auto,
         ) {
             Ok(_) => {
                 info!("✔ Logger initialized successfully!");

@@ -1,4 +1,5 @@
 #![allow(clippy::match_bool)]
+#![allow(special_module_name)]
 
 extern crate docopt;
 extern crate ethereum_types;
@@ -34,14 +35,14 @@ pub fn main() -> Result<()> {
                 cmd_generateRandomAddress: true,
                 ..
             } => {
-                info!("✔ Generating random address...");
+                log::info!("✔ Generating random address...");
                 generate_random_address()
             }
             CliArgs {
                 cmd_generateVanityAddress: true,
                 ..
             } => {
-                info!("✔ Generating vanity address...");
+                log::info!("✔ Generating vanity address...");
                 generate_vanity_address(cli_args.arg_prefix)
             }
             CliArgs {

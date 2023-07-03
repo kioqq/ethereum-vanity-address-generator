@@ -5,14 +5,14 @@ authors = ["Greg Kapka <greg@kapka.co.uk>"]
 
 [dependencies]
 log = "0.4.8"
-hex = "=0.4.0"
-rand = "=0.7.2"
+hex = "=0.4.3"
+rand = "=0.8.5"
 docopt = "1.1.0"
 tiny-keccak = "1.4"
-simplelog = "0.7.3"
-secp256k1 = "0.17.2"
+simplelog = "0.12.1"
+secp256k1 = "0.27.0"
 threadpool = "1.7.1"
 serde_json = "1.0.40"
 serde_derive = "1.0.101"
-ethereum-types = "0.4.0"
+ethereum-types = "0.9.0"
 serde = { version = "1", features = ["derive"] }

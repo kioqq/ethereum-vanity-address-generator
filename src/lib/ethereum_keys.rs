@@ -4,12 +4,13 @@ use crate::lib::{
     utils::{maybe_pad_hex, maybe_strip_hex_prefix, validate_hex, validate_prefix_hex_length},
 };
 use ethereum_types::Address as EthAddress;
-use secp256k1::{
-    key::{PublicKey, SecretKey},
-    Secp256k1,
-};
+use secp256k1::{PublicKey, Secp256k1, SecretKey};
+
 use serde_json::{json, Value as JsonValue};
-use std::sync::{mpsc, Arc};
+use std::{
+    convert::TryInto,
+    sync::{mpsc, Arc},
+};
 use tiny_keccak::keccak256;
 
 pub struct EthereumKeys {
@@ -33,7 +34,20 @@ impl EthereumKeys {
 
     fn public_key_to_eth_address(public_key: &PublicKey) -> EthAddress {
         // NOTE: Need the last 20 bytes of the hash of the uncompresed form of the public key, minus it's prefix byte.
-        EthAddress::from_slice(&keccak256(&public_key.serialize_uncompressed()[1..])[12..])
+        // EthAddress::from_slice(&keccak256(&public_key.serialize_uncompressed()[1..])[12..])
+
+        let bytes: [u8; 20] = keccak256(&public_key.serialize_uncompressed()[1..])[12..]
+            .try_into()
+            .unwrap();
+
+        EthAddress::from(&bytes)
+
+        // let mut hasher = Keccak::v256();
+        // let mut output = [0u8; 32];
+        // hasher.update(&public_key.serialize_uncompressed()[1..]);
+        // hasher.finalize(output.as_mut());
+
+        // EthAddress::from(output)
     }
 
     pub fn new_random_address() -> Result<Self> {
@@ -42,6 +56,11 @@ impl EthereumKeys {
 
     pub fn address_starts_with(&self, prefix: &str) -> bool {
         self.address_string.starts_with(prefix)
+    }
+
+    #[allow(dead_code)]
+    pub fn address_ends_with(&self, postfix: &str) -> bool {
+        self.address_string.ends_with(postfix)
     }
 
     pub fn from_private_key(private_key: &SecretKey) -> Self {
@@ -57,12 +76,13 @@ impl EthereumKeys {
     pub fn to_json(&self) -> JsonValue {
         json!({
             "address": format!("0x{}", self.address_string),
-            "private_key": format!("0x{:x}", self.private_key),
+            "private_key": format!("0x{}", self.private_key.display_secret()),
         })
     }
 
     pub fn new_vanity_address(prefix_string: String) -> Result<Self> {
         let prefix_arc = Arc::new(prefix_string.clone());
+
         Self::validate_prefix_hex(&prefix_string).and_then(|_| {
             let pool = threadpool::Builder::new().build();
             let (tx, rx) = mpsc::sync_channel(1);
@@ -75,6 +95,13 @@ impl EthereumKeys {
                             if !eth_keys.address_starts_with(&prefix) {
                                 continue;
                             }
+
+                            // println!("address: {:?}", eth_keys.address);
+
+                            // if !eth_keys.address_ends_with(&"37") {
+                            //     continue;
+                            // }
+
                             tx.send(eth_keys)
                                 .expect("Error sending generted keys from thread!")
                         }
@@ -92,7 +119,7 @@ impl EthereumKeys {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use secp256k1::key::SecretKey;
+    use secp256k1::SecretKey;
 
     fn get_sample_private_key_hex() -> String {
         "decaffb75a41481965e391fb6d4406b6c356d20194c5a88935151f0513c0ffee".to_string()
